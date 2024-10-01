@@ -1,0 +1,29 @@
+// EXAMPLE of schema
+
+
+[
+    {
+      "display": "id",
+      "name": "id",
+      "type": "INTEGER",
+      "options": []
+    },
+    {
+      "display": "Address",
+      "name": "address",
+      "type": "TEXT",
+      "options": []
+    },
+    {
+      "display": "Date (of arrival)",
+      "name": "dateOfArrival",
+      "type": "DATE",
+      "options": []
+    },
+    {
+      "display": "discount percentage",
+      "name": "discountPercentage",
+      "type": "FLOAT",
+      "options": []
+    }
+   ]
