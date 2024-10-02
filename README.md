@@ -1,12 +1,15 @@
 # Noloco-Exercise
 
-ran following in terminal:
+This API uses Node.js and Express.js to run the server and fetch the data.
+Screenshots are linked below of the solution.
+It was tested using Insomnia.
+
+To begin I ran the following in terminal:
 npm init -y           to get package.json file
 npm install express   to install express framework
 npm i -g nodemon      to get node monitor which constantly refreshes server so don't have to save and run over and over
 
 The user can traverse the API using:
-
 GET 'http://localhost:3000/dataset' to view the entire dataset
 ![/dataset screenshot](Screenshots/image1.png)
 
