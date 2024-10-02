@@ -108,9 +108,6 @@ app.get('/schema', (req, res) => {
 })
 
 
-
-
-
 app.post('/data', (req, res) => {
     //res.send('POST recieved successfully');
     //console.log('Post sent');
@@ -200,6 +197,7 @@ if (!findData) {
 }
 res.json(findData); // return the JSON format of the data
 })
+
 // runs the server
 app.listen(PORT, () => {
     console.log(`Server started listning on port ${PORT} at http://localhost:${PORT}/`);
