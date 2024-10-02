@@ -30,6 +30,7 @@ app.get('/', (req, res) => {
 
 })
 
+let MAINDATA = [];
 // fetching the data
 // async so it completes before continuing with the rest of the code
 // promise has to be fulfilled
@@ -38,10 +39,11 @@ const fetchData = async () => {
         const fetchedData = await fetch('https://app-media.noloco.app/noloco/dublin-bikes.json');
         MAINDATA = await fetchedData.json();
     } catch (error) {
-        res.status(400).json({error: 'Error with fetching the data'});   // try and catch to show errors
-    } console.log("Data fetched\n");                                       // if data is successfully fetched
+        res.status(400).json({error: 'Error with fetching the data'});    // try and catch to show errors
+    } console.log("Data fetched\n");
+    //console.log(MAINDATA);                                              // if data is successfully fetched
 };          
-fetchData();                                                             // call to fetch the data
+fetchData();                                                              // call to fetch the data
 
 // showing entire dataset 
 app.get('/dataset', (req, res) => {
@@ -49,6 +51,8 @@ app.get('/dataset', (req, res) => {
 });
 
 
+
+// 2021-12-13T16:55:02 date format
 const isValidDate = (dateValue) => {                                      // to check if a value is a date (REF: https://bito.ai/resources/javascript-check-valid-date-javascript-explained/)
     return !isNaN(Date.parse(dateValue));
 }
@@ -63,15 +67,14 @@ const DataType = (values) => {
         
     } else {
     
-    if (isValidDate(values)) return 'DATE';
+    if (isValidDate(values)) return 'DATE';                             // called from isValidDate function above
     if (typeof values === 'string') return 'TEXT';
             }
             
-            
-    return 'Unknown data type'; //2021-12-13T16:55:02
+    return 'Unknown data type'; 
 }
 
-const toCamelCase = str => {                                               // function to convert string to camelCase (REF: https://www.30secondsofcode.org/js/s/string-case-conversion/)
+const toCamelCase = str => {                                              // function to convert string to camelCase (REF: https://www.30secondsofcode.org/js/s/string-case-conversion/)
     const s =
       str &&
       str
@@ -108,10 +111,95 @@ app.get('/schema', (req, res) => {
 
 
 
+app.post('/data', (req, res) => {
+    //res.send('POST recieved successfully');
+    //console.log('Post sent');
+
+    //const AvailableFilters = ["id", "harvestTimeUtc", "stationId", "Station id", "availableBikeStands", "bikeStands", "availableBikes", "banking", "bonus", "lastUpdate", "status", "address", "name", "latitude", "longitude"];
+    
+    const MAINDATASCHEMA = CreatedSchema(MAINDATA);                       // getting the schema of the MAINDATA for filtering
+    //const AvailableFilters = MAINDATASCHEMA.map(field => field.name);   // to get original name 
+    const AvailableFilters = MAINDATASCHEMA.map(field => field.display);
+    const AvailableOperators = ["eq", "lt", "gt"];
+    
+    const { where } = req.body;
+
+    if (!where) {
+        return res.status(400).json({error: 'ERROR: where required in body'});
+    }
+
+    const Filters = Object.keys(where);                                   // get the object keys of "where" from body i.e. the filters 'stationId, id, name'
 
 
+    if (Filters.some(filter => !AvailableFilters.includes(filter))) {     // checking if the key of "where" (Filters) matches one of the AvailableFilters (REF: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some)
+        return res.status(400).json({error: `ERROR: this filter: ${Filters} does not match available filters`});
+    };
 
+    // to get the keys within the object of the filters i.e. the operators "lt, gt, eq"
+    const Operators = Object.keys(where[Filters]);
 
+    if (Operators.some(filter => !AvailableOperators.includes(filter))) {
+        return res.status(400).json({error: `ERROR: operator ${Operators} does not match available operators`});
+    };
+    
+   
+    /*const ConvertOperators = {
+        "lt": "<",
+        "gt": ">",
+        "eq": "="
+    };
+    */
+
+    // function to perform the <, > or = operation betwee the data and the body
+    const OperatorFunction = (x, y, operator) => {
+        if (operator === 'lt'){
+            return x < y;
+        }
+        if (operator === 'gt'){
+            return x > y;
+        }
+        if (operator === 'eq'){
+            return x == y;
+        }
+    }   
+                                                              
+    // filter the MAINDATA using the operator function 
+    const FilteredData = MAINDATA.filter(MData => OperatorFunction(MData[Filters], where[Filters][Operators], Operators[0]));
+
+    //const FilteredData = MAINDATA.filter(b => b["Station id"] < where[Filters][Operators])
+    
+    console.log([Filters], Operators, where[Filters][Operators] );
+
+    if (FilteredData.length === 0){
+        return res.status(400).json({error: 'This data does not exist'});
+    }
+    res.json(FilteredData);
+
+    //const filterobject = where.Filters;
+
+    //const Operators = Object.keys(filterobject);
+
+    //console.log(filterobject)
+
+    //if (Operators.some(filter => !AvailableOperators.includes(filter))){
+    //    return res.status(400).json({error: `ERROR: this operator: ${Operators} does not match available operators`})
+    //}
+
+    //return res.send('SUCCESSFUL');
+    
+})
+
+// route to find an ID within the dataset
+app.get('/data/:id', (req, res) => {
+
+// need req.params.id because ID is a parameter (44433632)
+// parseInt used so ID is treated as an integer
+const findData = MAINDATA.find(x => x.id === parseInt(req.params.id)); 
+if (!findData) {
+    return res.status(404).json({error: 'Data with that ID was not found'});
+}
+res.json(findData); // return the JSON format of the data
+})
 // runs the server
 app.listen(PORT, () => {
     console.log(`Server started listning on port ${PORT} at http://localhost:${PORT}/`);
